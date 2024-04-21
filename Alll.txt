@@ -1,0 +1,493 @@
+Assignment 6 Bully and Ring 
+
+import java.util.*;
+
+public class Bully {
+    int coordinator;
+    int max_processes;
+    boolean processes[];
+
+
+    public Bully(int max) {
+        max_processes = max;
+        processes = new boolean[max_processes];
+        coordinator = max;
+
+        System.out.println("Creating processes..");
+        for(int i = 0; i < max; i++) {
+            processes[i] = true;
+            System.out.println("P"+ (i+1) + " created");
+        }
+        System.out.println("Process P" + coordinator + " is the coordinator");
+
+    }
+    void displayProcesses() {
+        for(int i = 0; i < max_processes; i++) {
+            if(processes[i]) {
+                System.out.println("P" + (i+1) + " is up");
+            } else {
+                System.out.println("P" + (i+1) + " is down");
+            }
+        }
+        System.out.println("Process P" + coordinator + " is the coordinator");
+    }
+
+    void upProcess(int process_id) {
+        if(!processes[process_id - 1]) {
+            processes[process_id - 1] = true;
+            System.out.println("Process " + process_id + " is now up.");
+        } else {
+            System.out.println("Process " + process_id + " is already up.");
+        }
+    }
+
+    void downProcess(int process_id) {
+        if(!processes[process_id - 1]) {
+            System.out.println("Process " + process_id + " is already down.");
+        } else {
+            processes[process_id - 1] = false;
+            System.out.println("Process " + process_id + " is down.");
+        }
+    }
+
+    void runElection(int process_id) {
+        coordinator = process_id;
+        boolean keepGoing = true;
+
+        for(int i = process_id; i < max_processes && keepGoing; i++) {
+            System.out.println("Election message sent from process " + process_id + " to process " + (i+1));
+
+            if(processes[i]) {
+                keepGoing = false;
+                runElection(i + 1);
+            }
+        }
+    }
+
+    public static void main(String args[]) {
+        Bully bully = null;
+        int max_processes = 0, process_id = 0;
+        int choice = 0;
+        Scanner sc = new Scanner(System.in);
+
+        while(true) {
+            System.out.println("Bully Algorithm");
+            System.out.println("1. Create processes");
+            System.out.println("2. Display processes");
+            System.out.println("3. Up a process");
+            System.out.println("4. Down a process");
+            System.out.println("5. Run election algorithm");
+            System.out.println("6. Exit Program");
+            System.out.print("Enter your choice:- ");
+            choice = sc.nextInt();
+
+            switch(choice) {
+                case 1: 
+                    System.out.print("Enter the number of processes:- ");
+                    max_processes = sc.nextInt();
+                    bully = new Bully(max_processes);
+                    break;
+                case 2:
+                    bully.displayProcesses();
+                    break;
+                case 3:
+                    System.out.print("Enter the process number to up:- ");
+                    process_id = sc.nextInt();
+                    bully.upProcess(process_id);
+                    break;
+                case 4:
+                    System.out.print("Enter the process number to down:- ");
+                    process_id = sc.nextInt();
+                    bully.downProcess(process_id);
+                    break;
+                case 5:
+                    System.out.print("Enter the process number which will perform election:- ");
+                    process_id = sc.nextInt();
+                    bully.runElection(process_id);
+                    bully.displayProcesses();
+                    break;
+                case 6:
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Error in choice. Please try again.");
+                    break;
+            }
+        }
+    }
+}
+
+import java.util.*;
+
+public class Ring {
+    int max_processes;
+    int coordinator;
+    boolean processes[];
+    ArrayList<Integer> pid;
+
+    public Ring(int max) {
+        coordinator = max;
+        max_processes = max;
+        pid = new ArrayList<Integer>();
+        processes = new boolean[max];
+
+        for(int i = 0; i < max; i++) {
+            processes[i] = true;
+            System.out.println("P" + (i+1) + " created.");
+        }
+        System.out.println("P" + (coordinator) + " is the coordinator");
+    }
+
+    void displayProcesses() {
+        for(int i = 0; i < max_processes; i++) {
+            if(processes[i]) 
+                System.out.println("P" + (i+1) + " is up.");
+            else
+                System.out.println("P" + (i+1) + " is down.");
+        }   
+        System.out.println("P" + (coordinator) + " is the coordinator");
+    }
+
+    void upProcess(int process_id) {
+        if(!processes[process_id-1]) {
+            processes[process_id-1] = true;
+            System.out.println("Process P" + (process_id) + " is up.");
+        } else {
+            System.out.println("Process P" + (process_id) + " is already up.");
+        }
+    }
+
+    void downProcess(int process_id) {
+        if(!processes[process_id-1]) {
+            System.out.println("Process P" + (process_id) + " is already down.");
+        } else {
+            processes[process_id-1] = false;
+            System.out.println("Process P" + (process_id) + " is down.");
+        }
+    }
+
+    void displayArrayList(ArrayList<Integer> pid) {
+        System.out.print("[ ");
+        for(Integer x : pid) {
+            System.out.print(x + " ");
+        }
+        System.out.print(" ]\n");
+    }
+
+    void initElection(int process_id) {
+        if(processes[process_id-1]) {
+            pid.add(process_id);
+
+            int temp = process_id;
+
+            System.out.print("Process P" + process_id + " sending the following list:- ");
+            displayArrayList(pid);
+
+            while(temp != process_id - 1) {
+                if(processes[temp]) {
+                    pid.add(temp+1);
+                    System.out.print("Process P" + (temp + 1) + " sending the following list:- ");
+                    displayArrayList(pid);
+                }
+                temp = (temp + 1) % max_processes;
+            }
+            coordinator = Collections.max(pid);
+            System.out.println("Process P" + process_id + " has declared P" + coordinator + " as the coordinator");
+            pid.clear();
+        }
+    }
+
+    public static void main(String args[]) {
+        Ring ring = null;
+        int max_processes = 0, process_id = 0;
+        int choice = 0;
+        Scanner sc = new Scanner(System.in);
+
+        while(true) {
+            System.out.println("Ring Algorithm");
+            System.out.println("1. Create processes");
+            System.out.println("2. Display processes");
+            System.out.println("3. Up a process");
+            System.out.println("4. Down a process");
+            System.out.println("5. Run election algorithm");
+            System.out.println("6. Exit Program");
+            System.out.print("Enter your choice:- ");
+            choice = sc.nextInt();
+
+            switch(choice) {
+                case 1:
+                    System.out.print("Enter the total number of processes:- ");
+                    max_processes = sc.nextInt();
+                    ring = new Ring(max_processes);
+                    break;
+                case 2:
+                    ring.displayProcesses();
+                    break;
+                case 3:
+                    System.out.print("Enter the process to up:- ");
+                    process_id = sc.nextInt();
+                    ring.upProcess(process_id);
+                    break;
+                case 4:
+                    System.out.print("Enter the process to down:- ");
+                    process_id = sc.nextInt();
+                    ring.downProcess(process_id);
+                    break;
+                case 5:
+                    System.out.print("Enter the process which will initiate election:- ");
+                    process_id = sc.nextInt();
+                    ring.initElection(process_id);
+                    break;
+                case 6:
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Error in choice. Please try again.");
+                    break;
+            }
+        }
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Assignment 5 
+import java.util.Scanner;
+
+class Tring {
+    public static void main(String args[]) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the number of nodes: ");
+        int n = sc.nextInt();
+
+        // Decides the number of nodes forming the ring
+        
+
+        for (int i = 0; i < n; i++)
+            System.out.print(" " + i);
+        System.out.println(" " + 0);
+        int ch=0;
+        int sender=0,receiver=0;
+            do{
+                System.out.print("Enter sender: ");
+                sender = sc.nextInt();
+                System.out.print("Enter receiver: ");
+                receiver = sc.nextInt();
+                System.out.print("Enter Data To Send : ");
+                int data = sc.nextInt();
+
+                System.out.print("Token Passing :");
+                 //current token not equal to sender, increment i by 1 and j by j+1%n
+                int token = 0;
+                for (int i = token;i<sender;i++){
+                    System.out.print("  "+ i +"->");
+                }
+                System.out.println(" "+sender);
+                System.out.println("Sender "+sender+" Sending data : "+data);
+                for (int i = token; i!= receiver; i= (i+1)%n )
+                {
+                    System.out.println("Data "+ data +" Forwarded by "+i);
+                }
+                System.out.println("Receiver "+receiver+" Receiving The data : "+data+"\n");
+                token= sender;
+                System.out.println("Do you want to send data again ? enter 1 for yes  and  0  for  no : ");
+                ch = sc.nextInt(); 
+
+               
+            } while (ch==1);
+       
+    }
+
+}
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Assignment 1
+import java.rmi.*;
+import java.util.*;
+public class AddClient {
+public static void main(String args[]) { 
+    Scanner s = new Scanner(System.in);
+try {
+// Get reference to the remote object
+String addServerURL = "rmi://localhost/AddServer"; 
+AddServerIntf addServerIntf = (AddServerIntf) Naming.lookup(addServerURL);
+System.out.println("Enter The first number is: "); 
+double d1 = s.nextDouble();
+System.out.println("Enter The second number is: " );
+double d2 = s.nextDouble();
+// Invoke remote method to add numbers
+System.out.println("The sum is: " + addServerIntf.add(d1, d2));
+} 
+catch (Exception e) { System.out.println("Exception: "+ e);
+}}}
+
+
+import java.rmi.*;
+
+public class AddServer {
+public static void main(String args[]) {
+try { 
+//create remote object
+AddServerImpl addServerImpl = new AddServerImpl(); 
+//bind the remote object
+Naming.rebind("AddServer", addServerImpl);
+}
+catch (Exception e) {
+System.out.println("Exception: "+ e);
+}}}
+
+import java.rmi.*;
+import java.rmi.server.*;
+//class that implements the remote interface
+public class AddServerImpl extends UnicastRemoteObject 
+implements AddServerIntf {
+//constructor
+public AddServerImpl() throws RemoteException {
+}
+//implement method declared in the interface
+public double add(double d1, double d2) throws RemoteException {
+ return d1 + d2; }
+}
+
+
+import java.rmi.*;
+public interface AddServerIntf extends Remote { 
+//method declaration 
+double add(double d1, double d2) throws RemoteException;
+}
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Assignment 7
+
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    num1 = float(request.form['num1'])
+    num2 = float(request.form['num2'])
+    total = num1 + num2
+    return f'The sum of {num1} and {num2} is {total}'
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sum Calculator</title>
+</head>
+<body>
+    <h1>Sum Calculator</h1>
+    <form action="/calculate" method="post">
+        <label for="num1">Enter first number:</label>
+        <input type="number" id="num1" name="num1"><br><br>
+        <label for="num2">Enter second number:</label>
+        <input type="number" id="num2" name="num2"><br><br>
+        <input type="submit" value="Calculate Sum">
+    </form>
+</body>
+</html>
+
+Probleam Statement:  Create a simple web service and write any distributed application to consume the web service.
+
+Commands To Execute Assignment-7:
+	paste that index.html file in new folder "templates" of project folder
+	On Terminal:
+		python app.py
+	and go to "http://127.0.0.1:5000"
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Assignemnt 4:
+
+import threading
+import datetime
+import socket
+import time
+
+def send_time(slave_client):
+    while True:
+        slave_client.send(str(datetime.datetime.now()).encode())
+        print("Time sent successfully")
+        time.sleep(5)
+
+def receive_time(slave_client):
+    while True:
+        synchronized_time = datetime.datetime.strptime(slave_client.recv(1024).decode(), "%Y-%m-%d %H:%M:%S.%f")
+        print("Synchronized time at the client is:", synchronized_time)
+
+def initiate_slave_client(port=8080):
+    slave_client = socket.socket()
+    slave_client.connect(('127.0.0.1', port))
+    print("Starting to receive time from server")
+    threading.Thread(target=send_time, args=(slave_client,)).start()
+    print("Starting to receive synchronized time from server")
+    threading.Thread(target=receive_time, args=(slave_client,)).start()
+
+if __name__ == '__main__':
+    initiate_slave_client(port=8080)
+
+
+from dateutil import parser
+import threading
+import datetime
+import socket
+import time
+
+client_data = {}
+
+def start_receiving_clock_time(connector, address):
+    while True:
+        clock_time = parser.parse(connector.recv(1024).decode())
+        clock_time_diff = datetime.datetime.now() - clock_time
+        client_data[address] = {"clock_time": clock_time, "time_difference": clock_time_diff, "connector": connector}
+        time.sleep(5)
+
+def start_connecting(master_server):
+    while True:
+        master_slave_connector, addr = master_server.accept()
+        client_address = f"{addr[0]}:{addr[1]}"
+        threading.Thread(target=start_receiving_clock_time, args=(master_slave_connector, client_address)).start()
+        print(f"Client connected from address {client_address}")
+def synchronize_all_clocks():
+    while True:
+        if len(client_data) > 0:
+             avg_clock_diff = sum((client['time_difference'] for client in client_data.values()), datetime.timedelta()) / len(client_data)
+             for client in client_data.values():
+                synchronized_time = datetime.datetime.now() + avg_clock_diff
+                try:
+                    client['connector'].send(str(synchronized_time).encode())
+                except Exception as e:
+                    print(f"Error sending synchronized time to {client['address']}: {e}")
+        time.sleep(5)
+
+def initiate_clock_server(port=8080):
+    master_server = socket.socket()
+    master_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    master_server.bind(('', port))
+    master_server.listen(10)
+    print("Clock server started...")
+    threading.Thread(target=start_connecting, args=(master_server,)).start()
+    threading.Thread(target=synchronize_all_clocks).start()
+
+if __name__ == '__main__':
+    initiate_clock_server()
+
+
+Probleam Statement: Implement Berkeley algorithm for clock synchronization.
+
+
+Commands To Execute Assignment-4:
+	On Terminal-1:
+		python server.py
+
+	On Terminal-2:
+		python client.py
+
